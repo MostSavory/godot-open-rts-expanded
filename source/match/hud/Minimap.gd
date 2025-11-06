@@ -150,12 +150,26 @@ func _issue_movement_action(position_2d_within_texture_rect):
 	if world_position_2d == null:
 		return
 	var abstract_world_position_3d = Vector3(world_position_2d.x, 0, world_position_2d.y)
-	var camera = get_viewport().get_camera_3d()
-	var target_point_on_colliding_surface = camera.get_ray_intersection(
-		camera.unproject_position(abstract_world_position_3d)
-	)
-	MatchSignals.terrain_targeted.emit(target_point_on_colliding_surface)
+	
+	#Leaving this temporarily because maybe the OG writer knew something I don't?
+	#var camera = get_viewport().get_camera_3d()
+	#var target_point_on_colliding_surface = camera.get_ray_intersection(
+	#	camera.unproject_position(abstract_world_position_3d)
+	#)
+	#MatchSignals.terrain_targeted.emit(target_point_on_colliding_surface)
 
+	#Assuming they were preparing for a 3D terrain, I'm just doing this instead
+	var space_state = get_viewport().get_world_3d().direct_space_state
+	var ray_from = Vector3(world_position_2d.x, 1000.0, world_position_2d.y)
+	var ray_to = Vector3(world_position_2d.x, -1000.0, world_position_2d.y)
+	var query = PhysicsRayQueryParameters3D.create(ray_from, ray_to)
+	query.collision_mask = 1 #Landscape Collision channel
+	var result = space_state.intersect_ray(query)
+
+	if result:
+		MatchSignals.terrain_targeted.emit(result.position)
+	else:
+		MatchSignals.terrain_targeted.emit(abstract_world_position_3d)
 
 func _on_gui_input(event):
 	if event is InputEventMouseButton:
