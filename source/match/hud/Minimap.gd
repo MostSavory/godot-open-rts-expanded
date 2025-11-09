@@ -14,15 +14,29 @@ var _camera_movement_active = false
 @onready var _viewport_background = find_child("Background")
 @onready var _texture_rect = find_child("MinimapTextureRect")
 
+@export var MaxSize = 100
 
 func _ready():
 	if not FeatureFlags.show_minimap:
 		queue_free()
 	_remove_dummy_nodes()
 	await _match.ready  # make sure Match is ready as it may change map on setup
-	find_child("MinimapViewport").size = (
+	
+	var viewport_size = (
 		_match.find_child("Map").size * MINIMAP_PIXELS_PER_WORLD_METER
-	)
+		)
+	find_child("MinimapViewport").size = viewport_size
+	
+	await get_tree().process_frame
+
+	get_parent().pivot_offset = Vector2(0, viewport_size.y)
+	var larger_dimension = max(viewport_size.x, viewport_size.y)
+	var scale_factor = 1.0
+
+	if larger_dimension > MaxSize:
+		scale_factor = MaxSize / larger_dimension * 2
+	get_parent().scale = Vector2(scale_factor, scale_factor)
+	
 	_texture_rect.gui_input.connect(_on_gui_input)
 
 
